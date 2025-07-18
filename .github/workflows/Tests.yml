@@ -1,0 +1,67 @@
+name: Tests.yml
+on:
+  push:
+    paths-ignore:
+      - "**.md"
+      - ".gitignore"
+  workflow_dispatch:
+
+
+
+jobs:
+  Test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        compiler: [llvm, gcc]
+        include:
+          - os: "macos-14"
+            compiler: "llvm"
+          - os: "windows-2022"
+            compiler: "gcc"
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ./CJStruct/
+            ./Examples/
+            ~/.cache/ccache
+            ~/.ccache
+            ~/.config/ccache
+            ~/Library/Caches/ccache
+            ${{ env.LOCALAPPDATA }}/ccache
+            ${{ env.XDG_CACHE_HOME }}/ccache
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - name: Setup Cpp
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: ${{ matrix.compiler }}
+          cmake: true
+          cppcheck: true
+      - name: Clone Boost pfr
+        uses: actions/checkout@v4
+        with:
+          repository: boostorg/pfr
+          path: ./Boost
+      - name: Move Boost Pfr MACLLVM
+        if: ${{ matrix.os=='macos-14' && matrix.compiler == 'llvm' }}
+        run: mv ./Boost/include/** /opt/homebrew/opt/llvm/lib/clang/20/include
+      - name: Move Boost Pfr UBUNTU
+        if: ${{ matrix.os=='ubuntu-latest' }}
+        run: sudo mv ./Boost/include/** /usr/local/include
+      - name: Move Boost Pfr WINDOWS GCC
+        if: ${{ matrix.os=='windows-2022' && matrix.compiler == 'gcc' }}
+        run: mv ./Boost/include/** C:\Users\runneradmin\gcc\mingw64\include
+      - name: Build with cmake
+        run: |
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake --build .
+      - name: Start Example
+        run: ./build/Example

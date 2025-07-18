@@ -1,0 +1,6 @@
+pfr/
+cmake-build-*/
+out/
+.idea_modules/
+.idea/
+.env
