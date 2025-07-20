@@ -56,6 +56,10 @@ void inline stringToType(const std::string& str, int &default_value) {
     }
 }
 
+inline bool findRealSquare(const std::string_view line, const unsigned finded) {
+    const size_t countQuotes = countRealQuotes(line.substr(0, finded));
+    return countQuotes%2 == 0;
+}
 
 void inline stringToType(const std::string& str, long &default_value) {
     try {
@@ -194,19 +198,16 @@ inline std::string typeToString(const char32_t v) {
     if (v <= 0x7F) {
         // 1-byte sequence: 0xxxxxxx
         out.push_back(static_cast<char>(v));
-    }
-    else if (v <= 0x7FF) {
+    } else if (v <= 0x7FF) {
         // 2-byte sequence: 110xxxxx 10xxxxxx
         out.push_back(static_cast<char>(0xC0 | ((v >> 6) & 0x1F)));
         out.push_back(static_cast<char>(0x80 | ( v       & 0x3F)));
-    }
-    else if (v <= 0xFFFF) {
+    } else if (v <= 0xFFFF) {
         // 3-byte sequence: 1110xxxx 10xxxxxx 10xxxxxx
         out.push_back(static_cast<char>(0xE0 | ((v >> 12) & 0x0F)));
         out.push_back(static_cast<char>(0x80 | ((v >>  6) & 0x3F)));
         out.push_back(static_cast<char>(0x80 | ( v        & 0x3F)));
-    }
-    else if (v <= 0x10FFFF) {
+    } else if (v <= 0x10FFFF) {
         // 4-byte sequence: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
         out.push_back(static_cast<char>(0xF0 | ((v >> 18) & 0x07)));
         out.push_back(static_cast<char>(0x80 | ((v >> 12) & 0x3F)));

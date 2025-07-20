@@ -48,6 +48,10 @@ namespace stringBoost {
         // template <typename T>
         // void stringToType(const std::string& str, T& default_value);
         void inline standartReplace(std::string& line);
+        unsigned countRealQuotes(std::string_view str);
+        size_t findRealChar(std::string_view line, size_t commanow, char Char);
+        std::tuple<unsigned, unsigned, unsigned, unsigned> CountBrackets(std::string_view line);
+        inline bool findRealSquare(std::string_view line, unsigned finded);
         #include "stringB.ipp"
 }
 

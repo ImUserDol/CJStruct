@@ -1,5 +1,8 @@
 #ifndef CJSTRUCT_IPP
 #define CJSTRUCT_IPP
+#include <unordered_map>
+#include <boost/pfr/core_name.hpp>
+
 #include "CJStruct.h"
 
 namespace JsonParser {
@@ -13,63 +16,6 @@ namespace JsonParser {
     void TypeToString(std::string& parseString, T& defaultValue);
 
     namespace jsonToSTLS {
-        unsigned inline countRealQuotes(const std::string_view str) {
-            unsigned countslash = 0;
-            return std::ranges::count_if(str.begin(), str.end(), [countslash](const char i) mutable {
-                if (i == '\\') {
-                    ++countslash;
-                } else if (i == '"') {
-                    const bool tf = countslash%2==0;
-                    countslash = 0;
-                    return tf;
-                } else {
-                    countslash = 0;
-                }
-                return false;
-            });
-        };
-
-
-        inline bool findRealSquare(const std::string_view line, const unsigned finded) {
-            if (const size_t countQuotes = countRealQuotes(line.substr(0, finded)); countQuotes%2 == 0) {
-                return true;
-            }
-            return false;
-        }
-
-        inline std::tuple<unsigned, unsigned, unsigned, unsigned> CountBrackets(const std::string_view line) {
-            auto BracketsFinder = [&line](const char searchElement) -> unsigned {
-                unsigned finded = line.find(searchElement);
-                unsigned count = 0;
-                while (finded < -1) {
-                    if (findRealSquare(line, finded)) {
-                        count++;
-                    }
-                    const unsigned value = line.substr(finded+1).find(searchElement);
-                    if (value >= -1)
-                        break;
-                    finded = value + finded + 1;
-                }
-                return count;
-            };
-            return {BracketsFinder('{'), BracketsFinder('}'), BracketsFinder('['), BracketsFinder(']')};
-        }
-
-        size_t findRealChar(const std::string_view line, const size_t commanow, const char Char) {
-            const std::string_view sub1 = line.substr(0, commanow);
-            const size_t countQuotes = countRealQuotes(sub1);
-            if (const std::tuple<unsigned, unsigned, unsigned, unsigned> counts = CountBrackets(sub1); countQuotes%2==0 && std::get<0>(counts) == std::get<1>(counts) && std::get<2>(counts) == std::get<3>(counts)) {
-                if (line[commanow] != Char) {
-                    return commanow-1;
-                }
-                return commanow;
-            }
-            if (line.substr(commanow).find(Char) == std::string::npos) {
-                return std::numeric_limits<unsigned>::max();
-            }
-            return findRealChar(line,line.substr(commanow).find(Char) + commanow+1, Char);
-
-        }
 
         template <typename Vector>
         void parseVector(std::string& line, Vector& vector) {
@@ -82,7 +28,7 @@ namespace JsonParser {
                 while (true) {
                     vector_values v{};
                     size_t commanow = line.find(',');
-                    if (commanow >= std::numeric_limits<unsigned>::max() || (commanow=findRealChar(line, commanow, ','), commanow >= std::numeric_limits<unsigned>::max())) {
+                    if (commanow >= std::numeric_limits<unsigned>::max() || (commanow=stringBoost::findRealChar(line, commanow, ','), commanow >= std::numeric_limits<unsigned>::max())) {
                         parseType(line, v);
                         vector.push_back(v);
                         break;
@@ -105,7 +51,7 @@ namespace JsonParser {
                 while (index < ar.size()) {
                     array_values v{};
                     size_t commanow = line.find(',');
-                    if (commanow >= std::numeric_limits<unsigned>::max() || (commanow=findRealChar(line, commanow, ','), commanow >= std::numeric_limits<unsigned>::max())) {
+                    if (commanow >= std::numeric_limits<unsigned>::max() || (commanow=stringBoost::findRealChar(line, commanow, ','), commanow >= std::numeric_limits<unsigned>::max())) {
                         parseType(line, v);
                         ar[index] = v;
                         break;
@@ -129,7 +75,7 @@ namespace JsonParser {
                 FirstType Fv{};
                 SecondType Sv{};
                 size_t commanow = line.find(',');
-                if (commanow >= std::numeric_limits<unsigned>::max() || (commanow=findRealChar(line, commanow, ','), commanow >= std::numeric_limits<unsigned>::max())) {
+                if (commanow >= std::numeric_limits<unsigned>::max() || (commanow=stringBoost::findRealChar(line, commanow, ','), commanow >= std::numeric_limits<unsigned>::max())) {
                     parseType(line, Fv);
                     pair.first = Fv;
                     pair.second = Sv;
@@ -153,7 +99,7 @@ namespace JsonParser {
                 while (true) {
                     set_values v{};
                     size_t commanow = line.find(',');
-                    if (commanow >= std::numeric_limits<unsigned>::max() || (commanow=findRealChar(line, commanow, ','), commanow >= std::numeric_limits<unsigned>::max())) {
+                    if (commanow >= std::numeric_limits<unsigned>::max() || (commanow=stringBoost::findRealChar(line, commanow, ','), commanow >= std::numeric_limits<unsigned>::max())) {
                         parseType(line, v);
                         set.insert(v);
                         break;
@@ -169,7 +115,7 @@ namespace JsonParser {
         template<typename Element>
         void parseTupleElement(Element& el, std::string& line) {
             size_t commanow = line.find(',');
-            if (commanow >= std::numeric_limits<unsigned>::max() || (commanow=findRealChar(line, commanow, ','), commanow >= std::numeric_limits<unsigned>::max())) {
+            if (commanow >= std::numeric_limits<unsigned>::max() || (commanow=stringBoost::findRealChar(line, commanow, ','), commanow >= std::numeric_limits<unsigned>::max())) {
                 parseType(line, el);
                 return;
             }
@@ -229,7 +175,7 @@ namespace JsonParser {
                     FirstType Fv{};
                     SecondType Sv{};
                     size_t jump = line.find(':');
-                    if (jump >= std::numeric_limits<unsigned>::max() || (jump=findRealChar(line, jump, ':'), jump >= std::numeric_limits<unsigned>::max())) {
+                    if (jump >= std::numeric_limits<unsigned>::max() || (jump=stringBoost::findRealChar(line, jump, ':'), jump >= std::numeric_limits<unsigned>::max())) {
                         stringBoost::strip(line);
                         stringBoost::strip(line, "\"");
                         parseType(line, Fv);
@@ -239,7 +185,7 @@ namespace JsonParser {
                     parseType(stringBoost::strip(stringBoost::strip(line.substr(0, jump)), "\""), Fv);
                     line.erase(0, jump+1);
                     jump = line.find(',');
-                    if (jump >= std::numeric_limits<unsigned>::max() || (jump=findRealChar(line, jump, ','), jump >= std::numeric_limits<unsigned>::max())) {
+                    if (jump >= std::numeric_limits<unsigned>::max() || (jump=stringBoost::findRealChar(line, jump, ','), jump >= std::numeric_limits<unsigned>::max())) {
                         parseType(line, Sv);
                         map[Fv] = Sv;
                         break;
@@ -484,11 +430,11 @@ namespace JsonParser {
             parseString.erase(0,posstart+1);
         while (!parseString.empty()) {
              posstart = parseString.find(':');
-             if (posstart < std::numeric_limits<unsigned>::max() || (posstart=jsonToSTLS::findRealChar(parseString, posstart, ':'), posstart < std::numeric_limits<unsigned>::max())) {
+             if (posstart < std::numeric_limits<unsigned>::max() || (posstart=stringBoost::findRealChar(parseString, posstart, ':'), posstart < std::numeric_limits<unsigned>::max())) {
                  std::string k = stringBoost::strip(parseString.substr(0, posstart));
                  parseString.erase(0,posstart+1);
                  size_t commanow = parseString.find(',');
-                 commanow = commanow < -1 ? jsonToSTLS::findRealChar(parseString, parseString.find(','), ',') : parseString.length();
+                 commanow = commanow < -1 ? stringBoost::findRealChar(parseString, parseString.find(','), ',') : parseString.length();
                  Map.insert({k, stringBoost::strip(parseString.substr(0, commanow))});
                  parseString.erase(0,commanow+1);
                  if (commanow >= std::numeric_limits<unsigned>::max()) {
