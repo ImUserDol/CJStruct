@@ -1,5 +1,6 @@
 
 # CJStruct
+## UNSTABLE
 [English](https://github.com/ImUserDol/CJStruct/blob/main/README.md) | [Русский](https://github.com/ImUserDol/CJStruct/blob/main/README.ru_RU.md)
 
 **CJStruct** is a header-only C++20 library for JSON <-> struct mapping, powered by Boost.PFR’s aggregate reflection. Just call `JsonToStruct` or `StructToJson`- no manual serializers needed.
