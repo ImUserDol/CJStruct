@@ -1,4 +1,5 @@
 # CJStruct
+## UNSTABLE
 [English](https://github.com/ImUserDol/CJStruct/blob/main/README.md) | [Русский](https://github.com/ImUserDol/CJStruct/blob/main/README.ru_RU.md)
 
 CJStruct — заголовочная библиотека на C++20 для автоматического преобразования JSON <-> структур. Основана на aggregate-reflection из Boost.PFR. Достаточно вызвать `JsonToStruct` или `StructToJson` — вручную писать сериализаторы не придётся.
